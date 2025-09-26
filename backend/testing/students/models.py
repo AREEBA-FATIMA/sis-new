@@ -81,6 +81,10 @@ class Student(models.Model):
         related_name="students"
     )
 
+    # ✅ New fields for grade & section
+    current_grade = models.CharField(max_length=50, null=True, blank=True)
+    section = models.CharField(max_length=50, null=True, blank=True)
+
     shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, default="M")
     enrollment_year = models.IntegerField(default=timezone.now().year)
 

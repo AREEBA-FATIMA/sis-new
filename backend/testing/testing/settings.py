@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'subjects',
     'teachers',
     'attendance',
+    "courses",
+    "faculty",
     'exams',
     'user',
     'django.contrib.admin',

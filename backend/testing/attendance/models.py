@@ -1,35 +1,142 @@
-# attendance/models.py
 from django.db import models
+from django.utils import timezone
 
-class AttendanceSheet(models.Model):
-    campus = models.ForeignKey("campus.Campus", on_delete=models.CASCADE)
-    class_name = models.CharField(max_length=100)
-    month = models.IntegerField()
-    year = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
+
+# -----------------------------
+# Attendance Type
+# -----------------------------
+class AttendanceType(models.Model):
+    name = models.CharField(max_length=20)
+    active = models.BooleanField(default=True)
+    present = models.BooleanField(default=False)
+    excused = models.BooleanField(default=False)
+    absent = models.BooleanField(default=False)
+    late = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.class_name} - {self.month}/{self.year}"
+        return self.name
 
 
-class AttendanceRecord(models.Model):
-    sheet = models.ForeignKey(AttendanceSheet, on_delete=models.CASCADE, related_name="records")
-    student = models.ForeignKey("students.Student", on_delete=models.CASCADE)
-    date = models.DateField()
-    status = models.CharField(
-        max_length=1,
-        choices=[
-            ("P", "Present"),
-            ("L", "Late"),
-            ("E", "Excused"),
-            ("U", "Unexcused"),
-        ],
-        default="P",
+# -----------------------------
+# Attendance Register
+# -----------------------------
+class AttendanceRegister(models.Model):
+    name = models.CharField(max_length=16)
+    code = models.CharField(max_length=16, unique=True)
+    course = models.ForeignKey(
+        "courses.Course",
+        on_delete=models.CASCADE,
+        null=True, blank=True
     )
-    marked_by = models.ForeignKey("teachers.Teacher", on_delete=models.SET_NULL, null=True)
+    batch = models.ForeignKey(
+        "courses.Batch",
+        on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    subject = models.ForeignKey(
+        "courses.Subject",
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+# -----------------------------
+# Attendance Sheet
+# -----------------------------
+class AttendanceSheet(models.Model):
+    register = models.ForeignKey(
+        AttendanceRegister,
+        on_delete=models.CASCADE,
+        related_name="sheets",
+        null=True, blank=True
+    )
+    course = models.ForeignKey(
+        "courses.Course",
+        on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    batch = models.ForeignKey(
+        "courses.Batch",
+        on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    session = models.ForeignKey(
+        "sessions.Session",
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    attendance_date = models.DateField(default=timezone.now)
+    faculty = models.ForeignKey(
+        "faculty.Faculty",
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    active = models.BooleanField(default=True)
+
+    STATE_CHOICES = [
+        ('draft', 'Draft'),
+        ('start', 'Attendance Start'),
+        ('done', 'Attendance Taken'),
+        ('cancel', 'Cancelled'),
+    ]
+    state = models.CharField(max_length=10, choices=STATE_CHOICES, default='draft')
 
     class Meta:
-        unique_together = ("student", "date", "sheet")  # ek din ek student ki ek hi entry
+        unique_together = ('register', 'session', 'attendance_date')
 
     def __str__(self):
-        return f"{self.student} - {self.date} ({self.status})"
+        return f"{self.register.code if self.register else 'N/A'} - {self.attendance_date}"
+
+
+# -----------------------------
+# Attendance Line
+# -----------------------------
+class AttendanceLine(models.Model):
+    attendance_sheet = models.ForeignKey(
+        AttendanceSheet,
+        on_delete=models.CASCADE,
+        related_name="lines",
+        null=True, blank=True
+    )
+    student = models.ForeignKey(
+        "students.Student",
+        on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    present = models.BooleanField(default=False)
+    excused = models.BooleanField(default=False)
+    absent = models.BooleanField(default=False)
+    late = models.BooleanField(default=False)
+    course = models.ForeignKey(
+        "courses.Course",
+        on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    batch = models.ForeignKey(
+        "courses.Batch",
+        on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    remark = models.CharField(max_length=256, blank=True, null=True)
+    attendance_date = models.DateField(default=timezone.now)
+    register = models.ForeignKey(
+        AttendanceRegister,
+        on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    active = models.BooleanField(default=True)
+    attendance_type = models.ForeignKey(
+        AttendanceType,
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+
+    class Meta:
+        unique_together = ('student', 'attendance_sheet', 'attendance_date')
+
+    def __str__(self):
+        return f"{self.student} - {self.attendance_date}"
