@@ -1,28 +1,25 @@
 from django.contrib import admin
-from .models import Student
+from .models import Student, StudentEnrollment
 
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     list_display = (
         "name",
+        "student_code",   # 👈 Student Code added here
         "gr_no",
-        "get_class_teacher",   # ✅ Show teacher name (from classroom)
         "classroom",
         "campus",
+        "shift",
+        "enrollment_year",
         "current_state",
     )
-    list_filter = (
-        "current_state",
-        "campus",
-        "classroom__grade",
-        "classroom__section",
-        "classroom__class_teacher",  # ✅ Filter by class teacher
-    )
-    search_fields = ("name", "gr_no")
+    list_filter = ("campus", "shift", "enrollment_year", "current_state")
+    search_fields = ("name", "student_code", "gr_no")
 
-    @admin.display(ordering="classroom__class_teacher", description="Class Teacher")
-    def get_class_teacher(self, obj):
-        if obj.classroom and obj.classroom.class_teacher:
-            return str(obj.classroom.class_teacher)   # ✅ uses Teacher.__str__
-        return "-"
+
+@admin.register(StudentEnrollment)
+class StudentEnrollmentAdmin(admin.ModelAdmin):
+    list_display = ("student", "classroom", "academic_year", "date_enrolled")
+    list_filter = ("academic_year", "classroom")
+    search_fields = ("student__name", "classroom__grade__name")

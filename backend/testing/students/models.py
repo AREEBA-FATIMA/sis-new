@@ -3,9 +3,14 @@ from django.utils import timezone
 
 
 class Student(models.Model):
+    SHIFT_CHOICES = (
+        ("M", "Morning"),
+        ("A", "Afternoon"),
+    )
+
     # --- Personal Details ---
     photo = models.ImageField(upload_to="students/photos/", null=True, blank=True)
-    name = models.CharField(max_length=200)  # Only required
+    name = models.CharField(max_length=200)  # Required
     gender = models.CharField(
         max_length=10,
         choices=(("male", "Male"), ("female", "Female")),
@@ -60,9 +65,14 @@ class Student(models.Model):
         choices=(("active", "Active"), ("inactive", "Not Active")),
         default="active"
     )
-    campus = models.ForeignKey("campus.Campus", on_delete=models.SET_NULL, null=True, blank=True)
+    campus = models.ForeignKey(
+        "campus.Campus",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="students"
+    )
 
-    # ✅ Old direct connection (still kept for backward compatibility)
     classroom = models.ForeignKey(
         "classes.ClassRoom",
         on_delete=models.SET_NULL,
@@ -71,6 +81,10 @@ class Student(models.Model):
         related_name="students"
     )
 
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, default="M")
+    enrollment_year = models.IntegerField(default=timezone.now().year)
+
+    # Previous School Details
     reason_for_transfer = models.TextField(null=True, blank=True)
     to_year = models.CharField(max_length=20, null=True, blank=True)
     from_year = models.CharField(max_length=20, null=True, blank=True)
@@ -78,21 +92,46 @@ class Student(models.Model):
     last_school_name = models.CharField(max_length=200, null=True, blank=True)
     old_gr_no = models.CharField(max_length=50, null=True, blank=True)
 
-    gr_no = models.CharField(max_length=50, null=True, blank=True, unique=False)
+    # --- Auto Generated Fields ---
+    student_code = models.CharField(max_length=50, unique=True, editable=False, null=True, blank=True)
+    gr_no = models.CharField(max_length=20, editable=False, null=True, blank=True)
 
     # --- System Fields ---
     is_draft = models.BooleanField(default=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ["-created_at"]
+        unique_together = ("campus", "gr_no")  # ensure GR no unique per campus
+
+    def save(self, *args, **kwargs):
+        # Auto-generate GR No (sequential within campus)
+        if not self.gr_no and self.campus:
+            last_student = Student.objects.filter(campus=self.campus).order_by("-id").first()
+            last_num = 0
+            if last_student and last_student.gr_no:
+                try:
+                    last_num = int(last_student.gr_no)
+                except:
+                    last_num = 0
+            self.gr_no = f"{(last_num + 1):04d}"  # e.g. 0001
+
+        # Auto-generate Student Code
+        if not self.student_code and self.campus:
+            campus_code = getattr(self.campus, "code", "CMP")[-3:]  # last 3 chars
+            shift_code = self.shift.upper()
+            year_code = str(self.enrollment_year)[-2:]  # last 2 digits
+            gr_code = self.gr_no or "0000"
+            self.student_code = f"{campus_code}{shift_code}{year_code}-{gr_code}"
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.name} ({self.gr_no or 'No GR'})"
+        return f"{self.name} ({self.student_code or 'No Code'})"
 
 
 class StudentEnrollment(models.Model):
-    """
-    Ye model student ko specific classroom aur academic year se link karega.
-    """
     student = models.ForeignKey(Student, related_name="enrollments", on_delete=models.CASCADE)
     classroom = models.ForeignKey("classes.ClassRoom", related_name="enrollments", on_delete=models.CASCADE)
     academic_year = models.CharField(max_length=9, help_text="e.g. 2025-2026")
@@ -100,6 +139,7 @@ class StudentEnrollment(models.Model):
 
     class Meta:
         unique_together = ("student", "classroom", "academic_year")
+        ordering = ["-date_enrolled"]
 
     def __str__(self):
         return f"{self.student.name} → {self.classroom} ({self.academic_year})"
