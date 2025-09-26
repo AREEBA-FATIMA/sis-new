@@ -64,6 +64,8 @@ urlpatterns = [
     path("api/", include("students.urls")),
     path("api/", include("campus.urls")),
     path("api/", include("teachers.urls")),
+    path('api/classes/', include('classes.urls')),
+    path('api/subjects/', include('subjects.urls')), 
 
     # GraphQL endpoint (CSRF exempt for testing)
     path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, schema=schema))),]
