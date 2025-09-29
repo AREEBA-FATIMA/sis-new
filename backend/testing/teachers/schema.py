@@ -137,7 +137,7 @@ import graphene
 from graphene_django.types import DjangoObjectType
 from students.models import Student
 from campus.models import Campus
-from teachers.models import Teacher, TeacherEducation, TeacherExperience, TeacherRole
+from teachers.models import Teacher
 
 # ================= Types =================
 
@@ -153,46 +153,7 @@ class StudentType(DjangoObjectType):
         fields = ("id", "name", "gender", "campus")
 
 
-class TeacherEducationType(DjangoObjectType):
-    class Meta:
-        model = TeacherEducation
-        fields = ("level", "institution_name", "year_of_passing", "subjects", "grade")
-
-
-class TeacherExperienceType(DjangoObjectType):
-    class Meta:
-        model = TeacherExperience
-        fields = (
-            "institution_name",
-            "position",
-            "from_date",
-            "to_date",
-            "subjects_classes_taught",
-            "responsibilities",
-            "total_years",
-        )
-
-
-class TeacherRoleType(DjangoObjectType):
-    class Meta:
-        model = TeacherRole
-        fields = (
-            "role_title",
-            "campus",
-            "subjects",
-            "classes_taught",
-            "extra_responsibilities",
-            "start_date",
-            "end_date",
-            "is_active",
-        )
-
-
 class TeacherType(DjangoObjectType):
-    roles = graphene.List(TeacherRoleType)
-    educations = graphene.List(TeacherEducationType)
-    experiences = graphene.List(TeacherExperienceType)
-
     class Meta:
         model = Teacher
         fields = (
@@ -208,16 +169,7 @@ class TeacherType(DjangoObjectType):
             "save_status",
         )
 
-    def resolve_roles(parent, info):
-        return parent.roles.all()
-
-    def resolve_educations(parent, info):
-        return parent.educations.all()
-
-    def resolve_experiences(parent, info):
-        return parent.experiences.all()
-
-
+# Optional aggregate types
 class CampusDistributionType(graphene.ObjectType):
     campus = graphene.String()
     count = graphene.Int()
@@ -239,7 +191,7 @@ class Query(graphene.ObjectType):
 
     # Teachers
     teachers = graphene.List(TeacherType)
-    teacher = graphene.Field(TeacherType, id=graphene.ID(required=True))  # 👈 single teacher
+    teacher = graphene.Field(TeacherType, id=graphene.ID(required=True))
     total_teachers = graphene.Int()
 
     # ===== Resolvers =====
@@ -265,7 +217,7 @@ class Query(graphene.ObjectType):
     def resolve_teachers(root, info):
         return Teacher.objects.all()
 
-    def resolve_teacher(root, info, id):  # 👈 new resolver
+    def resolve_teacher(root, info, id):
         try:
             return Teacher.objects.get(pk=id)
         except Teacher.DoesNotExist:
