@@ -100,10 +100,27 @@ DATABASES = {
         'NAME': 'sis_two',         
         'USER': 'postgres',          # Default user
         'PASSWORD': 'password',    
-        'HOST': 'localhost',      # Default host
+        'HOST': '192.168.100.4',      
+        # 'HOST': 'localhost',      # Default host
         'PORT': '5432',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'school_database',          # tumhara naya database
+#         'USER': 'school_user',              # naye user ka username
+#         'PASSWORD': 'School_database123',   # user ka password
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
+
+
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

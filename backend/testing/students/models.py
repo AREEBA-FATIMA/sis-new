@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.core.validators import RegexValidator
 
 
 class Student(models.Model):
@@ -27,8 +28,24 @@ class Student(models.Model):
     primary_phone = models.CharField(max_length=20, null=True, blank=True)
 
     father_name = models.CharField(max_length=200, null=True, blank=True)
-    father_cnic = models.CharField(max_length=20, null=True, blank=True)
-    father_contact = models.CharField(max_length=20, null=True, blank=True)
+    father_cnic = models.CharField(
+        max_length=20, 
+        null=True, 
+        blank=True,
+        validators=[RegexValidator(
+            regex=r'^\d{5}-\d{7}-\d{1}$',
+            message='CNIC must be in format: 12345-1234567-1'
+        )]
+    )
+    father_contact = models.CharField(
+        max_length=20, 
+        null=True, 
+        blank=True,
+        validators=[RegexValidator(
+            regex=r'^(\+92|0)?[0-9]{10}$',
+            message='Phone number must be valid Pakistani number'
+        )]
+    )
     father_occupation = models.CharField(max_length=200, null=True, blank=True)
 
     secondary_phone = models.CharField(max_length=20, null=True, blank=True)
@@ -123,7 +140,8 @@ class Student(models.Model):
 
         # Auto-generate Student Code
         if not self.student_code and self.campus:
-            campus_code = getattr(self.campus, "code", "CMP")[-3:]  # last 3 chars
+            # Use campus_code instead of code field
+            campus_code = self.campus.campus_code[:3] if self.campus.campus_code else "CMP"
             shift_code = self.shift.upper()
             year_code = str(self.enrollment_year)[-2:]  # last 2 digits
             gr_code = self.gr_no or "0000"

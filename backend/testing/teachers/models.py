@@ -72,13 +72,55 @@ class Teacher(models.Model):
     role_end_date = models.DateField(blank=True, null=True)
     is_currently_active = models.BooleanField(default=True)
     
+    # Auto Generated Fields
+    teacher_id = models.CharField(max_length=20, unique=True, editable=False, null=True, blank=True)
+    employee_code = models.CharField(max_length=20, unique=True, editable=False, null=True, blank=True)
+    
     # System Fields
     save_status = models.CharField(max_length=10, choices=SAVE_STATUS_CHOICES, default="draft")
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        # Auto-generate teacher_id if not provided
+        if not self.teacher_id:
+            # Format: TCH-YYYY-XXXX (TCH-2025-0001)
+            year = self.date_created.year if self.date_created else 2025
+            last_teacher = Teacher.objects.filter(
+                teacher_id__startswith=f"TCH-{year}"
+            ).order_by("-id").first()
+            
+            if last_teacher and last_teacher.teacher_id:
+                try:
+                    last_num = int(last_teacher.teacher_id.split("-")[-1])
+                except:
+                    last_num = 0
+            else:
+                last_num = 0
+            
+            self.teacher_id = f"TCH-{year}-{(last_num + 1):04d}"
+        
+        # Auto-generate employee_code if not provided
+        if not self.employee_code and self.current_campus:
+            campus_code = getattr(self.current_campus, "code", "CMP")[:3]
+            last_teacher = Teacher.objects.filter(
+                employee_code__startswith=f"{campus_code}T"
+            ).order_by("-id").first()
+            
+            if last_teacher and last_teacher.employee_code:
+                try:
+                    last_num = int(last_teacher.employee_code[3:])
+                except:
+                    last_num = 0
+            else:
+                last_num = 0
+            
+            self.employee_code = f"{campus_code}T{(last_num + 1):03d}"
+        
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.full_name
+        return f"{self.full_name} ({self.teacher_id or 'No ID'})"
 
     class Meta:
         verbose_name = "Teacher"
