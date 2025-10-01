@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'exams',
     'attendance',
     'user',
+    'coordinator',
+    'django_filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -103,6 +105,7 @@ DATABASES = {
         'HOST': '192.168.100.4',      
         # 'HOST': 'localhost',      # Default host
         'PORT': '5432',
+        "CONN_MAX_AGE": 0,
     }
 }
 
@@ -175,4 +178,10 @@ CORS_ALLOWED_ORIGINS = [
 GRAPHENE = {
     "SCHEMA": "testing.schema.schema",
       
+}
+
+REST_FRAMEWORK = {
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend"
+    ]
 }
