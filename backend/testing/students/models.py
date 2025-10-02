@@ -98,10 +98,6 @@ class Student(models.Model):
         related_name="students"
     )
 
-    # ✅ New fields for grade & section
-    current_grade = models.CharField(max_length=50, null=True, blank=True)
-    section = models.CharField(max_length=50, null=True, blank=True)
-
     shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, default="M")
     enrollment_year = models.IntegerField(default=timezone.now().year)
 
@@ -140,7 +136,6 @@ class Student(models.Model):
 
         # Auto-generate Student Code
         if not self.student_code and self.campus:
-            # Use campus_code instead of code field
             campus_code = self.campus.campus_code[:3] if self.campus.campus_code else "CMP"
             shift_code = self.shift.upper()
             year_code = str(self.enrollment_year)[-2:]  # last 2 digits
