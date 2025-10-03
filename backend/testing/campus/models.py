@@ -117,6 +117,9 @@ class Campus(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # 🔹 Draft Flag (bilkul end me)
+    is_draft = models.BooleanField(default=False, help_text="If True, campus is in draft mode")
+
     # 🔹 Auto Calculations
     def save(self, *args, **kwargs):
         # Auto-generate campus_id if not provided
