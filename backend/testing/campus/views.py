@@ -11,12 +11,12 @@ class CampusViewSet(viewsets.ModelViewSet):
     def summary(self, request, pk=None):
         campus = self.get_object()
         data = {
-            "name": campus.name,
-            "code": campus.code,
-            "num_students": campus.num_students,
-            "num_teachers": campus.num_teachers,
-            "teacher_student_ratio": campus.teacher_student_ratio,
-            "capacity": campus.capacity,
+            "campus_name": campus.campus_name,
+            "campus_code": campus.campus_code,
+            "campus_type": campus.campus_type,
+            "city": campus.city,
+            "student_capacity": campus.student_capacity,
+            "status": campus.status,
         }
         return response.Response(data)
 
@@ -25,6 +25,8 @@ class CampusViewSet(viewsets.ModelViewSet):
     def facilities(self, request, pk=None):
         campus = self.get_object()
         data = {
+            "internet_wifi": campus.internet_wifi,
+            "power_backup": campus.power_backup,
             "science_labs": campus.science_labs,
             "computer_labs": campus.computer_labs,
             "library": campus.library,
@@ -32,9 +34,7 @@ class CampusViewSet(viewsets.ModelViewSet):
                 "male": campus.toilets_male,
                 "female": campus.toilets_female,
                 "accessible": campus.toilets_accessible,
-            },
-            "internet_wifi": campus.internet_wifi,
-            "power_backup": campus.power_backup,
+            }
         }
         return response.Response(data)
 

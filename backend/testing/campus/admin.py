@@ -3,6 +3,6 @@ from .models import Campus
 
 @admin.register(Campus)
 class CampusAdmin(admin.ModelAdmin):
-    list_display = ('campus_name', 'campus_code', 'city', 'student_capacity', 'status')
-    search_fields = ('campus_name', 'campus_code', 'city')
-    list_filter = ('status', 'campus_type', 'city')
+    list_display = ("campus_name", "campus_code", "city", "student_capacity", "status")
+    search_fields = ("campus_name", "campus_code", "city")
+    list_filter = ("status", "campus_type", "city")
