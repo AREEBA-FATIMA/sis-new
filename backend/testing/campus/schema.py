@@ -1,19 +1,18 @@
-# campus/schema.py
 import graphene
 from graphene_django import DjangoObjectType
 from .models import Campus
 
-# ======================
-# 🔹 DjangoObjectType
-# ======================
+# ---------------------
+# GraphQL Type
+# ---------------------
 class CampusType(DjangoObjectType):
     class Meta:
         model = Campus
-        fields = "__all__"  # expose all fields from the Campus model
+        fields = "__all__"
 
-# ======================
-# 🔹 Queries
-# ======================
+# ---------------------
+# Queries
+# ---------------------
 class Query(graphene.ObjectType):
     all_campuses = graphene.List(CampusType, description="Get all campuses")
     campus_by_id = graphene.Field(
@@ -31,19 +30,20 @@ class Query(graphene.ObjectType):
         except Campus.DoesNotExist:
             return None
 
-# ======================
-# 🔹 Mutations
-# ======================
+# ---------------------
+# Mutations
+# ---------------------
 class CreateCampus(graphene.Mutation):
     class Arguments:
         campus_name = graphene.String(required=True)
         campus_code = graphene.String(required=True)
-        campus_type = graphene.String()
+        campus_type = graphene.String(required=False)
         city = graphene.String(required=True)
         address = graphene.String(required=True)
-        primary_phone = graphene.String()
-        official_email = graphene.String()
-        # add more fields as needed
+        primary_phone = graphene.String(required=False)
+        official_email = graphene.String(required=False)
+        student_capacity = graphene.Int(required=False)
+        status = graphene.String(required=False)
 
     campus = graphene.Field(CampusType)
 
@@ -57,6 +57,8 @@ class CreateCampus(graphene.Mutation):
         campus_type="main",
         primary_phone=None,
         official_email=None,
+        student_capacity=0,
+        status="active"
     ):
         campus = Campus(
             campus_name=campus_name,
@@ -66,18 +68,13 @@ class CreateCampus(graphene.Mutation):
             address=address,
             primary_phone=primary_phone,
             official_email=official_email,
+            student_capacity=student_capacity,
+            status=status,
         )
         campus.save()
         return CreateCampus(campus=campus)
 
-# ======================
-# 🔹 Root Mutation
-# ======================
 class Mutation(graphene.ObjectType):
     create_campus = CreateCampus.Field()
-    # you can add update_campus and delete_campus later
 
-# ======================
-# 🔹 Schema
-# ======================
 schema = graphene.Schema(query=Query, mutation=Mutation)
