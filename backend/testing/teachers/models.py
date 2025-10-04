@@ -5,7 +5,6 @@ from campus.models import Campus
 GENDER_CHOICES = [
     ("male", "Male"),
     ("female", "Female"),
-    ("other", "Other"),
 ]
 
 MARITAL_STATUS_CHOICES = [
